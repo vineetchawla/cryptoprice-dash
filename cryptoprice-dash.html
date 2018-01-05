@@ -1,11 +1,18 @@
 <link rel="import" href="bower_components/polymer/polymer-element.html">
 <link rel="import" href="bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="bower_components/paper-spinner/paper-spinner-lite.html">
 
 <dom-module id="cryptoprice-dash">
     
     <template>
         <h2>Hello World</h2>
-        <iron-ajax id="coinbase" handle-as="json" on-response="_handleResponse"></iron-ajax>
+        <iron-ajax id="coinbase" handle-as="json" on-response="_handleResponse"></iron-ajax loading="{{loading}}">
+        <paper-spinner-lite alt="Loading prices" active=[[loading]]></paper-spinner-lite>
+        <div hidden$ = "[[loading]]">
+            <template is="dom-repeat" items="[[currencies]]">
+                <p>[[item.code]] - [[item.name]] - [[item.price]]</p>
+            </template>
+        </div>
     </template>
     <script>
         class CryptopriceDash extends Polymer.Element {
@@ -17,17 +24,26 @@
                         value: [
                             {
                                 code: 'BTC',
-                                value: 'Bitcoin'
+                                value: 'Bitcoin',
+                                price: 0
                             },
                             {
                                 code: 'ETH',
-                                value: 'Ethereum'
+                                value: 'Ethereum',
+                                price:0
                             },
                             {
                                 code: 'LTC',
-                                value: 'Litecoin'
+                                value: 'Litecoin',
+                                price: 0
                             }
                         ]
+                    },
+
+                    loading: {
+                        type : boolean,
+                        notify : true,
+                        value: false
                     }
                 }
             }
@@ -50,7 +66,14 @@
             }
 
             _handleResponse(response){
-                console.log(response);
+                this._computeCurrencyPrice(response.detail);
+            }
+
+            _computeCurrencyPrice(data){
+                var code = data.url.substring(35,38);
+                var index = this.currencies.map(function (e){ return e.code; }).indexOf(code);
+                console.log(index)
+                this.set('currencies.' + index + '.price', data.response.data.amount)
             }
         }
         window.customElements.define(CryptopriceDash.is, CryptopriceDash);
